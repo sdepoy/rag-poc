@@ -1,10 +1,11 @@
 import os
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
+import config
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_chroma import Chroma
 
 # 1. --- LOAD THE CLEANED TEXT FROM A FILE ---
-file_path = "cleaned_data.txt"
+file_path = config.CLEANED_DATA_FILE
 print(f"Step 1: Loading data from {file_path}...")
 try:
     with open(file_path, 'r', encoding='utf-8') as file:

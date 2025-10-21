@@ -1,9 +1,10 @@
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
+import config
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.llms import LlamaCpp  # Import LlamaCpp
-from langchain.prompts import PromptTemplate
-from langchain.schema.runnable import RunnablePassthrough
-from langchain.schema.output_parser import StrOutputParser
+from langchain_core.prompts import PromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
 
 
 # --- 1. LOAD THE VECTOR STORE ---
@@ -28,6 +29,8 @@ Answer the question based only on the following context:
 {context}
 
 Question: {question}
+
+Answer:
 """
 prompt = PromptTemplate.from_template(template)
 
@@ -36,9 +39,9 @@ prompt = PromptTemplate.from_template(template)
 print("Step 4: Creating and running the RAG chain...")
 # Instantiate the local LlamaCpp model
 llm = LlamaCpp(
-    model_path="./Meta-Llama-3-8B-Instruct.Q4_K_M.gguf", # Path to your GGUF model
-    n_ctx=2048,          # The max sequence length to use
-    temperature=0.3,     # The temperature to use for sampling
+    model_path=config.MODEL_FILE_PATH, # Path to your GGUF model
+    n_ctx=config.MODEL_N_CTX,          # The max sequence length to use
+    temperature=config.MODEL_TEMP,     # The temperature to use for sampling
     n_gpu_layers=0,      # The number of layers to offload to GPU (0 for CPU)
     verbose=False        # Suppress verbose output
 )
@@ -63,3 +66,8 @@ response = rag_chain.invoke(question)
 print("\nAnswer:")
 print(response)
 print("--------------------------------------------------")
+
+# --- 6. EXPLICITLY CLEAN UP ---
+print("Questions has been answered, time to clean up a bit and prepare for next run...")
+del llm
+print("Done.")
