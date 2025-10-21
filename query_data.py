@@ -58,16 +58,16 @@ rag_chain = (
 # --- 5. ASK A QUESTION ---
 print("--------------------------------------------------")
 question = input("Ask question: ") 
-print(f"Asking question: {question}")
 print("Generating answer... (this may take a moment)")
 
-response = rag_chain.invoke(question)
+# This returns a generator that yields chunks of text as they are created
+for chunk in rag_chain.stream(question):
+    if isinstance(chunk, str):
+        print(chunk, end="", flush=True)
 
-print("\nAnswer:")
-print(response)
-print("--------------------------------------------------")
+print("\n--------------------------------------------------")
 
 # --- 6. EXPLICITLY CLEAN UP ---
-print("Questions has been answered, time to clean up a bit and prepare for next run...")
+print("Question has been answered, time to clean up a bit and prepare for next run...")
 del llm
 print("Done.")
