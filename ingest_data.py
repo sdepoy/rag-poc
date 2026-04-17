@@ -1,5 +1,6 @@
 import os
 import config
+import shutil
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
@@ -16,31 +17,43 @@ except FileNotFoundError:
 
 
 # 2. --- SPLIT THE TEXT INTO CHUNKS ---
-print("Step 1: Splitting documents into chunks...")
+print("Step 2: Splitting documents into chunks...")
 text_splitter = RecursiveCharacterTextSplitter(
     chunk_size=1000, # The max number of characters in a chunk
     chunk_overlap=200, # The number of characters to overlap between chunks
     length_function=len
 )
-docs = text_splitter.split_text(final_cleaned_text)
+docs = text_splitter.create_documents(
+    texts=[final_cleaned_text], 
+    metadatas=[{"source": config.CLEANED_DATA_FILE}] 
+)
+
+print(f"   - Created {len(docs)} document chunks.")
+print(f"   - Sample metadata: {docs[0].metadata}")
 
 
-# 3. --- CREATE EMBEDDINGS AND STORE IN CHROMA ---
-print("Step 2: Creating embeddings and storing in ChromaDB...")
-persist_directory = 'chroma_db'
+# 3. --- CLEAR OLD DB AND CREATE NEW ONE ---
+print("Step 3: Creating embeddings and storing in ChromaDB...")
+persist_directory = config.CHROMA_DIRECTORY
+
+# Optional: Delete the old DB folder to ensure a fresh start
+# This prevents "double" data if you run the script multiple times
+if os.path.exists(persist_directory):
+    print(f"   - Clearing old database in {persist_directory}...")
+    shutil.rmtree(persist_directory)
 
 # Use the HuggingFace embeddings model
 embeddings_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
 # Use Chroma to create the vector store from the documents
 # This single command creates the embeddings and stores them in the database
-vectorstore = Chroma.from_texts(
-    texts=docs, 
+vectorstore = Chroma.from_documents(  
+    documents=docs, 
     embedding=embeddings_model, 
     persist_directory=persist_directory
 )
 
 print("\n--------------------------------------------------")
 print("✅ Ingestion Complete!")
-print(f"Vector store created in '{persist_directory}' with {vectorstore._collection.count()} document chunks.")
+print(f"Vector store created in '{persist_directory}' with {len(docs)} document chunks.")
 print("--------------------------------------------------")
